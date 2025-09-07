@@ -1,3 +1,7 @@
+# Important note about this fork
+This fork just "Implement workaround for warnings printed in AiCliGui".  It is not clear if this workaround is the proper way to do things with jediterm, but it is enough to get us unblocked (silence the warnings).  This commit is not intended to be upstreamed, but it would be nice if some kind of fix was upstreamed so we (and other users) don't encounter the same kind of issues.
+
+
 JediTerm
 ========
 
