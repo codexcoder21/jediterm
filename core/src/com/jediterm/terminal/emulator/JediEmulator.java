@@ -515,6 +515,28 @@ public class JediEmulator extends DataStreamIteratingEmulator {
           //Set Top and Bottom Margins
           return setScrollingRegion(args); //DECSTBM
         }
+      case 's':
+        // Save cursor (CSI s). Some apps use this in addition to ESC 7.
+        if (args.startsWithQuestionMark()) {
+          // Save DEC Private Mode Values (DECSM: CSI ? Pm s). Not implemented; accept to avoid warnings.
+          return true;
+        }
+        myTerminal.saveCursor();
+        return true;
+      case 'u':
+        // Restore cursor (CSI u). Some apps also emit vendor/private variants.
+        if (args.startsWithQuestionMark()) {
+          // Restore DEC Private Mode Values (DECRST: CSI ? Pm u). Not implemented; accept to avoid warnings.
+          return true;
+        }
+        if (args.startsWithMoreMark()) {
+          // A number of terminals use CSI > Pm u for keyboard protocol/modify-other-keys
+          // negotiation. JediTerm doesn't implement these; accept to avoid noisy logs.
+          // Example seen in the wild: CSI > 7 u
+          return true;
+        }
+        myTerminal.restoreCursor();
+        return true;
       case 't':
         return windowManipulation(args);
       default:
@@ -708,6 +730,17 @@ public class JediEmulator extends DataStreamIteratingEmulator {
           return true;
         case 2004:
           setModeEnabled(TerminalMode.BracketedPasteMode, enabled);
+          return true;
+        case 2026:
+          // Synchronized Output mode (DECSET 2026 / DECRST 2026)
+          // Modern terminals (alacritty, vte, wezterm, etc.) use this to coalesce
+          // screen updates between the enable/disable brackets. JediTerm doesn't
+          // currently implement synchronized repainting, but we accept the
+          // sequence to avoid noisy warnings in logs.
+          // TODO: Investigate real synchronized update support:
+          //  - Track a "synchronized" flag while 2026 is enabled
+          //  - Buffer write/display invalidations and coalesce repaints
+          //  - Flush on ESC[?2026l, on resize, or when buffer grows too large
           return true;
         case 9001:
           // suppress warnings about `win32-input-mode`
